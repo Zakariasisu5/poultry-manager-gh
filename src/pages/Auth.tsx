@@ -1,15 +1,25 @@
 
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthContext } from '@/hooks/useAuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ThemeProvider } from '@/components/theme-provider';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Auth = () => {
-  const { signInWithGoogle, session, isLoading } = useAuthContext();
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword, session, isLoading } = useAuthContext();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isResettingPassword, setIsResettingPassword] = useState(searchParams.get('reset') === 'true');
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     // Redirect if already authenticated
@@ -17,6 +27,54 @@ const Auth = () => {
       navigate('/');
     }
   }, [session, isLoading, navigate]);
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setIsSubmitting(true);
+    try {
+      const { error } = await signInWithEmail(email, password);
+      if (error) {
+        setAuthError(error.message);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    
+    if (password !== confirmPassword) {
+      setAuthError("Passwords don't match");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      const { error } = await signUpWithEmail(email, password);
+      if (error) {
+        setAuthError(error.message);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setIsSubmitting(true);
+    try {
+      const { error } = await resetPassword(email);
+      if (error) {
+        setAuthError(error.message);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -53,6 +111,137 @@ const Auth = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
+            {isResettingPassword ? (
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="name@example.com" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                {authError && (
+                  <div className="text-destructive text-sm">{authError}</div>
+                )}
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? 'Sending...' : 'Send Reset Link'}
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  className="w-full" 
+                  onClick={() => setIsResettingPassword(false)}
+                >
+                  Back to Sign In
+                </Button>
+              </form>
+            ) : (
+              <Tabs defaultValue="signin" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="signin">Sign In</TabsTrigger>
+                  <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                </TabsList>
+                <TabsContent value="signin" className="mt-4">
+                  <form onSubmit={handleSignIn} className="space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input 
+                        id="email" 
+                        type="email" 
+                        placeholder="name@example.com" 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="password">Password</Label>
+                        <Button 
+                          type="button" 
+                          variant="link" 
+                          className="px-0 text-xs" 
+                          onClick={() => setIsResettingPassword(true)}
+                        >
+                          Forgot password?
+                        </Button>
+                      </div>
+                      <Input 
+                        id="password" 
+                        type="password" 
+                        placeholder="••••••••" 
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+                    {authError && (
+                      <div className="text-destructive text-sm">{authError}</div>
+                    )}
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                      {isSubmitting ? 'Signing in...' : 'Sign In'}
+                    </Button>
+                  </form>
+                </TabsContent>
+                <TabsContent value="signup" className="mt-4">
+                  <form onSubmit={handleSignUp} className="space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input 
+                        id="email" 
+                        type="email" 
+                        placeholder="name@example.com" 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="password">Password</Label>
+                      <Input 
+                        id="password" 
+                        type="password" 
+                        placeholder="••••••••" 
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="confirm-password">Confirm Password</Label>
+                      <Input 
+                        id="confirm-password" 
+                        type="password" 
+                        placeholder="••••••••" 
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+                    {authError && (
+                      <div className="text-destructive text-sm">{authError}</div>
+                    )}
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                      {isSubmitting ? 'Signing up...' : 'Sign Up'}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
+            )}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator className="w-full" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or continue with
+                </span>
+              </div>
+            </div>
             <Button 
               onClick={signInWithGoogle} 
               variant="outline" 

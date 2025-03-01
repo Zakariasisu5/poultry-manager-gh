@@ -11,6 +11,9 @@ interface AuthContextType {
   isLoading: boolean;
   signIn: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<{ error: any }>;
+  signUpWithEmail: (email: string, password: string) => Promise<{ error: any }>;
+  resetPassword: (email: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -119,6 +122,101 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return signIn();
   };
 
+  const signInWithEmail = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        toast({
+          title: "Error signing in",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
+      
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully signed in.",
+      });
+      return { error: null };
+    } catch (error: any) {
+      toast({
+        title: "Error signing in",
+        description: error.message,
+        variant: "destructive",
+      });
+      return { error };
+    }
+  };
+
+  const signUpWithEmail = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}`,
+        },
+      });
+      
+      if (error) {
+        toast({
+          title: "Error signing up",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
+      
+      toast({
+        title: "Registration successful",
+        description: "Please check your email for a confirmation link.",
+      });
+      return { error: null };
+    } catch (error: any) {
+      toast({
+        title: "Error signing up",
+        description: error.message,
+        variant: "destructive",
+      });
+      return { error };
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?reset=true`,
+      });
+      
+      if (error) {
+        toast({
+          title: "Error resetting password",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
+      
+      toast({
+        title: "Password reset email sent",
+        description: "Please check your email for password reset instructions.",
+      });
+      return { error: null };
+    } catch (error: any) {
+      toast({
+        title: "Error resetting password",
+        description: error.message,
+        variant: "destructive",
+      });
+      return { error };
+    }
+  };
+
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
@@ -138,7 +236,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       profile, 
       isLoading, 
       signIn, 
-      signInWithGoogle, 
+      signInWithGoogle,
+      signInWithEmail,
+      signUpWithEmail,
+      resetPassword,
       signOut,
       refreshProfile
     }}>
