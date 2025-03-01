@@ -1,5 +1,5 @@
 
-import { Bell, Menu, Search, User } from "lucide-react";
+import { Bell, LogOut, Menu, Search, Settings, User, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,6 +11,8 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { useState } from "react";
+import { UserProfileModal } from "../user/UserProfileModal";
 
 interface HeaderProps {
   sidebarOpen: boolean;
@@ -18,6 +20,29 @@ interface HeaderProps {
 }
 
 export function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [userProfile, setUserProfile] = useState({
+    name: "Farm Manager",
+    email: "manager@poultrypro.com",
+    role: "Farm Manager",
+    avatarUrl: ""
+  });
+
+  const handleLogin = () => {
+    // In a real app, this would validate credentials
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+  };
+
+  const handleProfileUpdate = (profile: typeof userProfile) => {
+    setUserProfile(profile);
+    setShowProfileModal(false);
+  };
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b animate-fade-in">
       <div className="flex items-center gap-2 md:gap-4">
@@ -59,38 +84,67 @@ export function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
       </div>
       
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-accent animate-pulse-subtle" />
-          <span className="sr-only">Notifications</span>
-        </Button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="" alt="User" />
-                <AvatarFallback className="bg-primary/10 text-primary">FM</AvatarFallback>
-              </Avatar>
+        {isAuthenticated ? (
+          <>
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="h-5 w-5" />
+              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-accent animate-pulse-subtle" />
+              <span className="sr-only">Notifications</span>
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">Farm Manager</p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  manager@poultrypro.com
-                </p>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Log out</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={userProfile.avatarUrl} alt={userProfile.name} />
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {userProfile.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{userProfile.name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {userProfile.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setShowProfileModal(true)}>
+                  <UserCog className="mr-2 h-4 w-4" />
+                  Profile Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="mr-2 h-4 w-4" />
+                  App Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        ) : (
+          <Button onClick={handleLogin} className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            Login
+          </Button>
+        )}
       </div>
+
+      {showProfileModal && (
+        <UserProfileModal 
+          profile={userProfile}
+          isOpen={showProfileModal}
+          onClose={() => setShowProfileModal(false)}
+          onSave={handleProfileUpdate}
+        />
+      )}
     </header>
   );
 }
