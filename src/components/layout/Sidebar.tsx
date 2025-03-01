@@ -8,7 +8,8 @@ import {
   PieChart, 
   Home,
   Settings,
-  HelpCircle
+  HelpCircle,
+  Egg
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -58,8 +59,7 @@ export function Sidebar({ open, onOpenChange }: SidebarProps) {
     { 
       title: "Livestock Tracking", 
       path: "/livestock", 
-      icon: Feather,
-      badge: "New"
+      icon: Feather
     },
     { 
       title: "Health Management", 
@@ -70,6 +70,12 @@ export function Sidebar({ open, onOpenChange }: SidebarProps) {
       title: "Feed Management", 
       path: "/feed", 
       icon: BarChart 
+    },
+    { 
+      title: "Egg Projection", 
+      path: "/egg-projection", 
+      icon: Egg,
+      badge: "New"
     },
     { 
       title: "Financial Management", 
