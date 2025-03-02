@@ -46,8 +46,12 @@ const LandingPage = () => {
         {/* Navigation */}
         <header className="container px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <Egg className="h-8 w-8 text-primary" />
+            <div className="flex items-center space-x-3">
+              <img 
+                src="/lovable-uploads/b6344b98-df7c-4ed3-b4ae-675281440523.png" 
+                alt="PoultryPro Logo" 
+                className="h-12 w-12" 
+              />
               <span className="text-2xl font-bold tracking-tight">PoultryPro</span>
             </div>
             <Button
@@ -62,6 +66,11 @@ const LandingPage = () => {
 
         {/* Hero Section */}
         <section className="container px-4 sm:px-6 lg:px-8 py-20 flex flex-col items-center text-center">
+          <img 
+            src="/lovable-uploads/b6344b98-df7c-4ed3-b4ae-675281440523.png" 
+            alt="PoultryPro" 
+            className="h-32 w-32 mb-8" 
+          />
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">
             Modern Poultry Farm Management
           </h1>
@@ -129,7 +138,11 @@ const LandingPage = () => {
         <footer className="border-t py-12">
           <div className="container px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <Egg className="h-6 w-6 text-primary" />
+              <img 
+                src="/lovable-uploads/b6344b98-df7c-4ed3-b4ae-675281440523.png" 
+                alt="PoultryPro Logo" 
+                className="h-8 w-8" 
+              />
               <span className="text-lg font-semibold">PoultryPro</span>
             </div>
             <p className="text-sm text-muted-foreground">
