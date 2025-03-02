@@ -1,526 +1,580 @@
-import React, { useState, useEffect } from 'react';
-import { useToast } from '@/components/ui/use-toast';
+
+import { useState } from "react";
 import { 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Search,
-  Tag,
-  Calendar,
-  DollarSign
-} from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuthContext } from '@/hooks/useAuthContext';
-import { PageContainer } from '@/components/layout/PageContainer';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+  Calendar, 
+  Feather,
+  Filter,
+  Plus,
+  Search
+} from "lucide-react";
+import { PageContainer } from "@/components/layout/PageContainer";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { DashboardCard } from "@/components/dashboard/DashboardCard";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { ChartContainer } from "@/components/dashboard/ChartContainer";
 
-interface Livestock {
-  id: string;
-  animal_type: string;
-  breed: string | null;
-  tag_number: string | null;
-  date_acquired: string;
-  acquisition_cost: number | null;
-  gender: string | null;
-  date_of_birth: string | null;
-  notes: string | null;
-  status: string;
-}
+const breedPerformanceData = [
+  { name: 'Rhode Island Red', value: 88 },
+  { name: 'Leghorn', value: 92 },
+  { name: 'Sussex', value: 79 },
+  { name: 'Plymouth Rock', value: 85 },
+  { name: 'Orpington', value: 82 },
+];
 
-const LivestockTracking: React.FC = () => {
-  const { user } = useAuthContext();
-  const { toast } = useToast();
-  const [livestock, setLivestock] = useState<Livestock[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  // Form state
-  const [isOpen, setIsOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [currentLivestock, setCurrentLivestock] = useState<Livestock | null>(null);
-  const [formData, setFormData] = useState({
-    animal_type: '',
-    breed: '',
-    tag_number: '',
-    date_acquired: new Date().toISOString().split('T')[0],
-    acquisition_cost: '',
-    gender: '',
-    date_of_birth: '',
-    notes: '',
-    status: 'active'
-  });
+// Sample flock data
+const flockData = [
+  { 
+    id: 1, 
+    name: 'Coop #1', 
+    breed: 'Rhode Island Red', 
+    quantity: 120, 
+    age: '32 weeks', 
+    status: 'Healthy',
+    lastUpdate: '2 days ago' 
+  },
+  { 
+    id: 2, 
+    name: 'Coop #2', 
+    breed: 'Leghorn', 
+    quantity: 150, 
+    age: '28 weeks', 
+    status: 'Healthy',
+    lastUpdate: '1 day ago' 
+  },
+  { 
+    id: 3, 
+    name: 'Coop #3', 
+    breed: 'Sussex', 
+    quantity: 85, 
+    age: '42 weeks', 
+    status: 'Under Treatment',
+    lastUpdate: '3 hours ago' 
+  },
+  { 
+    id: 4, 
+    name: 'Coop #4', 
+    breed: 'Plymouth Rock', 
+    quantity: 110, 
+    age: '15 weeks', 
+    status: 'Healthy',
+    lastUpdate: '5 days ago' 
+  },
+  { 
+    id: 5, 
+    name: 'Coop #5', 
+    breed: 'Orpington', 
+    quantity: 75, 
+    age: '36 weeks', 
+    status: 'Needs Attention',
+    lastUpdate: '12 hours ago' 
+  },
+];
 
-  useEffect(() => {
-    fetchLivestock();
-  }, [user]);
+const LivestockTracking = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
-  const fetchLivestock = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('livestock')
-        .select('*')
-        .order('date_acquired', { ascending: false });
-
-      if (error) {
-        throw error;
-      }
-
-      setLivestock(data || []);
-    } catch (error: any) {
-      toast({
-        title: 'Error fetching livestock',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
-  };
-
-  const resetForm = () => {
-    setFormData({
-      animal_type: '',
-      breed: '',
-      tag_number: '',
-      date_acquired: new Date().toISOString().split('T')[0],
-      acquisition_cost: '',
-      gender: '',
-      date_of_birth: '',
-      notes: '',
-      status: 'active'
-    });
-    setIsEditing(false);
-    setCurrentLivestock(null);
-  };
-
-  const openAddDialog = () => {
-    resetForm();
-    setIsOpen(true);
-  };
-
-  const openEditDialog = (item: Livestock) => {
-    setCurrentLivestock(item);
-    setFormData({
-      animal_type: item.animal_type,
-      breed: item.breed || '',
-      tag_number: item.tag_number || '',
-      date_acquired: item.date_acquired,
-      acquisition_cost: item.acquisition_cost?.toString() || '',
-      gender: item.gender || '',
-      date_of_birth: item.date_of_birth || '',
-      notes: item.notes || '',
-      status: item.status
-    });
-    setIsEditing(true);
-    setIsOpen(true);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Filter flocks based on search and status
+  const filteredFlocks = flockData.filter(flock => {
+    const matchesSearch = 
+      flock.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      flock.breed.toLowerCase().includes(searchTerm.toLowerCase());
     
-    try {
-      if (isEditing && currentLivestock) {
-        // Update existing livestock
-        const { error } = await supabase
-          .from('livestock')
-          .update({
-            animal_type: formData.animal_type,
-            breed: formData.breed || null,
-            tag_number: formData.tag_number || null,
-            date_acquired: formData.date_acquired,
-            acquisition_cost: formData.acquisition_cost ? parseFloat(formData.acquisition_cost) : null,
-            gender: formData.gender || null,
-            date_of_birth: formData.date_of_birth || null,
-            notes: formData.notes || null,
-            status: formData.status,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', currentLivestock.id);
-
-        if (error) throw error;
-        
-        toast({
-          title: 'Livestock updated',
-          description: 'The livestock record has been updated successfully.',
-        });
-      } else {
-        // Add new livestock
-        const { error } = await supabase
-          .from('livestock')
-          .insert({
-            user_id: user?.id,
-            animal_type: formData.animal_type,
-            breed: formData.breed || null,
-            tag_number: formData.tag_number || null,
-            date_acquired: formData.date_acquired,
-            acquisition_cost: formData.acquisition_cost ? parseFloat(formData.acquisition_cost) : null,
-            gender: formData.gender || null,
-            date_of_birth: formData.date_of_birth || null,
-            notes: formData.notes || null,
-            status: formData.status
-          });
-
-        if (error) throw error;
-        
-        toast({
-          title: 'Livestock added',
-          description: 'The new livestock has been added successfully.',
-        });
-      }
-      
-      setIsOpen(false);
-      resetForm();
-      fetchLivestock();
-    } catch (error: any) {
-      toast({
-        title: isEditing ? 'Error updating livestock' : 'Error adding livestock',
-        description: error.message,
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this livestock record?')) {
-      try {
-        const { error } = await supabase
-          .from('livestock')
-          .delete()
-          .eq('id', id);
-
-        if (error) throw error;
-        
-        toast({
-          title: 'Livestock deleted',
-          description: 'The livestock record has been deleted successfully.',
-        });
-        
-        fetchLivestock();
-      } catch (error: any) {
-        toast({
-          title: 'Error deleting livestock',
-          description: error.message,
-          variant: 'destructive',
-        });
-      }
-    }
-  };
-
-  const filteredLivestock = livestock.filter(item => {
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      item.animal_type.toLowerCase().includes(searchLower) ||
-      (item.breed && item.breed.toLowerCase().includes(searchLower)) ||
-      (item.tag_number && item.tag_number.toLowerCase().includes(searchLower))
-    );
+    const matchesStatus = 
+      statusFilter === "all" || 
+      flock.status.toLowerCase() === statusFilter.toLowerCase();
+    
+    return matchesSearch && matchesStatus;
   });
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString();
-  };
-
-  const getStatusBadgeColor = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'active':
-        return 'bg-green-500';
-      case 'sold':
-        return 'bg-blue-500';
-      case 'deceased':
-        return 'bg-gray-500';
+      case 'healthy':
+        return "bg-green-100 text-green-800";
+      case 'under treatment':
+        return "bg-blue-100 text-blue-800";
+      case 'needs attention':
+        return "bg-amber-100 text-amber-800";
       default:
-        return 'bg-yellow-500';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   return (
     <PageContainer>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Livestock Tracking</h1>
           <p className="text-muted-foreground">
-            Manage your livestock records
+            Monitor your flock health, population, and performance metrics
           </p>
         </div>
-        <Button onClick={openAddDialog}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Livestock
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm">
+            <Calendar className="h-4 w-4 mr-2" />
+            <span>Jul 12, 2023</span>
+          </Button>
+          <Button size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            <span>Add New Birds</span>
+          </Button>
+        </div>
       </div>
 
-      <Card className="mb-6">
-        <CardHeader className="pb-3">
-          <CardTitle>Livestock Management</CardTitle>
-          <CardDescription>
-            Track and manage your farm animals with detailed records
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="relative w-full md:w-64">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+      <Tabs defaultValue="flocks" className="mb-8">
+        <TabsList>
+          <TabsTrigger value="flocks">Flocks</TabsTrigger>
+          <TabsTrigger value="breeds">Breeds</TabsTrigger>
+          <TabsTrigger value="performance">Performance</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="flocks">
+          <div className="flex items-center justify-between mb-6">
+            <div className="relative max-w-md">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search livestock..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                type="search"
+                placeholder="Search flocks or breeds..."
+                className="pl-8 w-full md:w-[300px]"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
+            </div>
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select 
+                defaultValue="all" 
+                onValueChange={setStatusFilter}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="healthy">Healthy</SelectItem>
+                  <SelectItem value="under treatment">Under Treatment</SelectItem>
+                  <SelectItem value="needs attention">Needs Attention</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          {loading ? (
-            <div className="flex justify-center items-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : filteredLivestock.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">No livestock records found</p>
-              <Button variant="outline" className="mt-4" onClick={openAddDialog}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add your first livestock
-              </Button>
-            </div>
-          ) : (
-            <div className="rounded-md border">
+          <DashboardCard title="Current Flocks" className="mb-6">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Flock Name</TableHead>
+                  <TableHead>Breed</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead>Age</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Last Update</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredFlocks.map((flock) => (
+                  <TableRow key={flock.id}>
+                    <TableCell className="font-medium">{flock.name}</TableCell>
+                    <TableCell>{flock.breed}</TableCell>
+                    <TableCell>{flock.quantity}</TableCell>
+                    <TableCell>{flock.age}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={getStatusColor(flock.status)}>
+                        {flock.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{flock.lastUpdate}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm">
+                        Details
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </DashboardCard>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <DashboardCard 
+              title="Total Population" 
+              className="md:col-span-1"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-4xl font-bold">540</h3>
+                  <p className="text-sm text-muted-foreground">across 5 coops</p>
+                </div>
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Feather className="h-8 w-8 text-primary" />
+                </div>
+              </div>
+              <Separator className="my-4" />
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <p className="text-xl font-semibold">120</p>
+                  <p className="text-xs text-muted-foreground">Laying Hens</p>
+                </div>
+                <div>
+                  <p className="text-xl font-semibold">380</p>
+                  <p className="text-xs text-muted-foreground">Broilers</p>
+                </div>
+                <div>
+                  <p className="text-xl font-semibold">40</p>
+                  <p className="text-xs text-muted-foreground">Chicks</p>
+                </div>
+              </div>
+            </DashboardCard>
+
+            <DashboardCard 
+              title="Recent Changes" 
+              className="md:col-span-2"
+            >
+              <div className="space-y-4">
+                <div className="flex items-start pb-4 border-b">
+                  <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                    <Plus className="h-4 w-4 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm">Added 20 new chicks to Coop #2 (Leghorn)</p>
+                    <p className="text-xs text-muted-foreground">July 10, 2023 | 2:15 PM</p>
+                  </div>
+                </div>
+                <div className="flex items-start pb-4 border-b">
+                  <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center mr-3">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-4 w-4 text-amber-600"
+                    >
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm">Updated health status for Coop #3 (Sussex) to "Under Treatment"</p>
+                    <p className="text-xs text-muted-foreground">July 8, 2023 | 9:30 AM</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center mr-3">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-4 w-4 text-red-600"
+                    >
+                      <path d="m3 6 6 6-6 6" />
+                      <path d="m21 6-6 6 6 6" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm">Transferred 15 hens from Coop #4 to Coop #5</p>
+                    <p className="text-xs text-muted-foreground">July 7, 2023 | 3:45 PM</p>
+                  </div>
+                </div>
+              </div>
+            </DashboardCard>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="breeds">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <ChartContainer
+              title="Breed Distribution"
+              description="Current flock composition"
+              type="pie"
+              data={[
+                { name: 'Rhode Island Red', value: 120 },
+                { name: 'Leghorn', value: 150 },
+                { name: 'Sussex', value: 85 },
+                { name: 'Plymouth Rock', value: 110 },
+                { name: 'Orpington', value: 75 },
+              ]}
+              className="md:col-span-1"
+            />
+            
+            <ChartContainer
+              title="Breed Performance"
+              description="Productivity score (out of 100)"
+              type="bar"
+              data={breedPerformanceData}
+              className="md:col-span-2"
+              color="#4f46e5"
+            />
+          </div>
+          
+          <DashboardCard title="Breed Information" className="mb-6">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Breed Name</TableHead>
+                  <TableHead>Primary Purpose</TableHead>
+                  <TableHead>Average Weight</TableHead>
+                  <TableHead>Egg Production</TableHead>
+                  <TableHead>Temperament</TableHead>
+                  <TableHead>Climate Adaptation</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-medium">Rhode Island Red</TableCell>
+                  <TableCell>Dual Purpose</TableCell>
+                  <TableCell>6.5 - 8.5 lbs</TableCell>
+                  <TableCell>250-300 eggs/year</TableCell>
+                  <TableCell>Friendly, Docile</TableCell>
+                  <TableCell>Excellent</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Leghorn</TableCell>
+                  <TableCell>Egg Layer</TableCell>
+                  <TableCell>4.5 - 6 lbs</TableCell>
+                  <TableCell>280-320 eggs/year</TableCell>
+                  <TableCell>Active, Flighty</TableCell>
+                  <TableCell>Good</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Sussex</TableCell>
+                  <TableCell>Dual Purpose</TableCell>
+                  <TableCell>7 - 9 lbs</TableCell>
+                  <TableCell>180-200 eggs/year</TableCell>
+                  <TableCell>Gentle, Friendly</TableCell>
+                  <TableCell>Very Good</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Plymouth Rock</TableCell>
+                  <TableCell>Dual Purpose</TableCell>
+                  <TableCell>7.5 - 9.5 lbs</TableCell>
+                  <TableCell>200-280 eggs/year</TableCell>
+                  <TableCell>Docile, Hardy</TableCell>
+                  <TableCell>Excellent</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Orpington</TableCell>
+                  <TableCell>Meat Type</TableCell>
+                  <TableCell>8 - 10 lbs</TableCell>
+                  <TableCell>175-200 eggs/year</TableCell>
+                  <TableCell>Very Gentle, Broody</TableCell>
+                  <TableCell>Good</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </DashboardCard>
+        </TabsContent>
+        
+        <TabsContent value="performance">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <ChartContainer
+              title="Egg Production"
+              description="Last 6 months"
+              type="area"
+              data={[
+                { name: 'Jan', value: 5400 },
+                { name: 'Feb', value: 5200 },
+                { name: 'Mar', value: 5800 },
+                { name: 'Apr', value: 6100 },
+                { name: 'May', value: 6500 },
+                { name: 'Jun', value: 6300 },
+              ]}
+              color="#4f46e5"
+            />
+            
+            <ChartContainer
+              title="Mortality Rate"
+              description="Last 6 months (%)"
+              type="bar"
+              data={[
+                { name: 'Jan', value: 1.2 },
+                { name: 'Feb', value: 1.0 },
+                { name: 'Mar', value: 0.8 },
+                { name: 'Apr', value: 1.1 },
+                { name: 'May', value: 0.7 },
+                { name: 'Jun', value: 0.5 },
+              ]}
+              color="#f43f5e"
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <DashboardCard 
+              title="Key Performance Indicators" 
+              className="md:col-span-1"
+            >
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">Feed Conversion Ratio</span>
+                    <span className="text-sm">1.8</span>
+                  </div>
+                  <div className="w-full bg-secondary h-2 rounded-full">
+                    <div className="bg-primary h-2 rounded-full" style={{ width: '85%' }}></div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Excellent (benchmark: 2.0)</p>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">Egg Production Rate</span>
+                    <span className="text-sm">76%</span>
+                  </div>
+                  <div className="w-full bg-secondary h-2 rounded-full">
+                    <div className="bg-primary h-2 rounded-full" style={{ width: '76%' }}></div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Good (benchmark: 80%)</p>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">Growth Rate</span>
+                    <span className="text-sm">92%</span>
+                  </div>
+                  <div className="w-full bg-secondary h-2 rounded-full">
+                    <div className="bg-primary h-2 rounded-full" style={{ width: '92%' }}></div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Excellent (benchmark: 85%)</p>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">Survival Rate</span>
+                    <span className="text-sm">98.7%</span>
+                  </div>
+                  <div className="w-full bg-secondary h-2 rounded-full">
+                    <div className="bg-primary h-2 rounded-full" style={{ width: '98.7%' }}></div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Excellent (benchmark: 97%)</p>
+                </div>
+              </div>
+            </DashboardCard>
+            
+            <DashboardCard 
+              title="Performance By Flock" 
+              className="md:col-span-2"
+            >
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Animal Type</TableHead>
-                    <TableHead>Tag/ID</TableHead>
-                    <TableHead>Breed</TableHead>
-                    <TableHead>Acquired</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Flock</TableHead>
+                    <TableHead>Egg Production</TableHead>
+                    <TableHead>Feed Conversion</TableHead>
+                    <TableHead>Mortality</TableHead>
+                    <TableHead>Overall Score</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredLivestock.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.animal_type}</TableCell>
-                      <TableCell>{item.tag_number || 'N/A'}</TableCell>
-                      <TableCell>{item.breed || 'N/A'}</TableCell>
-                      <TableCell>{formatDate(item.date_acquired)}</TableCell>
-                      <TableCell>
-                        <Badge className={getStatusBadgeColor(item.status)}>
-                          {item.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" onClick={() => openEditDialog(item)}>
-                            <Edit className="h-4 w-4" />
-                            <span className="sr-only">Edit</span>
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)}>
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
+                  <TableRow>
+                    <TableCell className="font-medium">Coop #1 (Rhode Island Red)</TableCell>
+                    <TableCell className="text-green-600">High</TableCell>
+                    <TableCell className="text-green-600">Excellent</TableCell>
+                    <TableCell className="text-green-600">Low (0.5%)</TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <div className="h-2 w-24 bg-secondary rounded-full mr-2">
+                          <div className="h-2 bg-green-500 rounded-full" style={{ width: '90%' }}></div>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        <span>90%</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Coop #2 (Leghorn)</TableCell>
+                    <TableCell className="text-green-600">Very High</TableCell>
+                    <TableCell className="text-amber-600">Good</TableCell>
+                    <TableCell className="text-green-600">Low (0.7%)</TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <div className="h-2 w-24 bg-secondary rounded-full mr-2">
+                          <div className="h-2 bg-green-500 rounded-full" style={{ width: '88%' }}></div>
+                        </div>
+                        <span>88%</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Coop #3 (Sussex)</TableCell>
+                    <TableCell className="text-amber-600">Medium</TableCell>
+                    <TableCell className="text-amber-600">Good</TableCell>
+                    <TableCell className="text-red-600">High (2.1%)</TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <div className="h-2 w-24 bg-secondary rounded-full mr-2">
+                          <div className="h-2 bg-amber-500 rounded-full" style={{ width: '72%' }}></div>
+                        </div>
+                        <span>72%</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Coop #4 (Plymouth Rock)</TableCell>
+                    <TableCell className="text-amber-600">Medium</TableCell>
+                    <TableCell className="text-green-600">Excellent</TableCell>
+                    <TableCell className="text-green-600">Low (0.8%)</TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <div className="h-2 w-24 bg-secondary rounded-full mr-2">
+                          <div className="h-2 bg-green-500 rounded-full" style={{ width: '85%' }}></div>
+                        </div>
+                        <span>85%</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Coop #5 (Orpington)</TableCell>
+                    <TableCell className="text-amber-600">Low</TableCell>
+                    <TableCell className="text-green-600">Excellent</TableCell>
+                    <TableCell className="text-amber-600">Medium (1.2%)</TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <div className="h-2 w-24 bg-secondary rounded-full mr-2">
+                          <div className="h-2 bg-amber-500 rounded-full" style={{ width: '78%' }}></div>
+                        </div>
+                        <span>78%</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 </TableBody>
               </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>{isEditing ? 'Edit Livestock' : 'Add New Livestock'}</DialogTitle>
-            <DialogDescription>
-              {isEditing 
-                ? 'Update the details for this livestock record.' 
-                : 'Enter the details of the new livestock to add to your records.'}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="animal_type">Animal Type <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="animal_type"
-                    name="animal_type"
-                    placeholder="Chicken, Duck, etc."
-                    value={formData.animal_type}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status <span className="text-red-500">*</span></Label>
-                  <select
-                    id="status"
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    required
-                  >
-                    <option value="active">Active</option>
-                    <option value="sold">Sold</option>
-                    <option value="deceased">Deceased</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="tag_number">Tag/ID Number</Label>
-                  <div className="relative">
-                    <Tag className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="tag_number"
-                      name="tag_number"
-                      placeholder="Identification number"
-                      value={formData.tag_number}
-                      onChange={handleInputChange}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="breed">Breed</Label>
-                  <Input
-                    id="breed"
-                    name="breed"
-                    placeholder="Breed type"
-                    value={formData.breed}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="date_acquired">Date Acquired <span className="text-red-500">*</span></Label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="date_acquired"
-                      name="date_acquired"
-                      type="date"
-                      value={formData.date_acquired}
-                      onChange={handleInputChange}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="date_of_birth">Date of Birth</Label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="date_of_birth"
-                      name="date_of_birth"
-                      type="date"
-                      value={formData.date_of_birth}
-                      onChange={handleInputChange}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="acquisition_cost">Acquisition Cost</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="acquisition_cost"
-                      name="acquisition_cost"
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={formData.acquisition_cost}
-                      onChange={handleInputChange}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="gender">Gender</Label>
-                  <select
-                    id="gender"
-                    name="gender"
-                    value={formData.gender || ''}
-                    onChange={handleInputChange}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  >
-                    <option value="">Select gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="unknown">Unknown</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notes</Label>
-                <textarea
-                  id="notes"
-                  name="notes"
-                  placeholder="Additional information"
-                  value={formData.notes}
-                  onChange={handleInputChange}
-                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">
-                {isEditing ? 'Update' : 'Add'} Livestock
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+            </DashboardCard>
+          </div>
+        </TabsContent>
+      </Tabs>
     </PageContainer>
   );
 };

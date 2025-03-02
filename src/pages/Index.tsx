@@ -9,7 +9,6 @@ import {
   TrendingUp,
   Users
 } from "lucide-react";
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { PageContainer } from "@/components/layout/PageContainer";
@@ -18,8 +17,6 @@ import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { ChartContainer } from "@/components/dashboard/ChartContainer";
 
 const Index = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  
   // Sample data for charts
   const birdCountData = [
     { name: 'Jan', value: 2400 },
@@ -53,29 +50,6 @@ const Index = () => {
     { id: 3, activity: 'Health inspection completed for Coop #1', time: '1 day ago' },
     { id: 4, activity: '15 new chicks added to the flock', time: '2 days ago' },
   ];
-
-  // Simulate data loading
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <PageContainer>
-        <div className="flex items-center justify-center min-h-[80vh]">
-          <div className="flex flex-col items-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-            <p className="text-muted-foreground">Loading dashboard data...</p>
-          </div>
-        </div>
-      </PageContainer>
-    );
-  }
 
   return (
     <PageContainer>
