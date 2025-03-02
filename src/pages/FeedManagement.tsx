@@ -5,9 +5,10 @@ import {
   Edit, 
   Trash2, 
   Search,
-  Tag,
   Calendar,
-  DollarSign
+  DollarSign,
+  Package,
+  ShoppingBag
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/hooks/useAuthContext';
@@ -41,63 +42,61 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
 
-interface Livestock {
+interface Feed {
   id: string;
-  animal_type: string;
-  breed: string | null;
-  tag_number: string | null;
-  date_acquired: string;
-  acquisition_cost: number | null;
-  gender: string | null;
-  date_of_birth: string | null;
+  feed_type: string;
+  quantity: number;
+  unit: string;
+  purchase_date: string;
+  expiration_date: string | null;
+  cost_per_unit: number;
+  supplier: string | null;
   notes: string | null;
-  status: string;
 }
 
-const LivestockTracking: React.FC = () => {
+const FeedManagement: React.FC = () => {
   const { user } = useAuthContext();
   const { toast } = useToast();
-  const [livestock, setLivestock] = useState<Livestock[]>([]);
+  const [feed, setFeed] = useState<Feed[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Form state
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentLivestock, setCurrentLivestock] = useState<Livestock | null>(null);
+  const [currentFeed, setCurrentFeed] = useState<Feed | null>(null);
   const [formData, setFormData] = useState({
-    animal_type: '',
-    breed: '',
-    tag_number: '',
-    date_acquired: new Date().toISOString().split('T')[0],
-    acquisition_cost: '',
-    gender: '',
-    date_of_birth: '',
-    notes: '',
-    status: 'active'
+    feed_type: '',
+    quantity: '',
+    unit: '',
+    purchase_date: new Date().toISOString().split('T')[0],
+    expiration_date: '',
+    cost_per_unit: '',
+    supplier: '',
+    notes: ''
   });
 
   useEffect(() => {
-    fetchLivestock();
+    fetchFeed();
   }, [user]);
 
-  const fetchLivestock = async () => {
+  const fetchFeed = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('livestock')
+        .from('feed_inventory')
         .select('*')
-        .order('date_acquired', { ascending: false });
+        .order('purchase_date', { ascending: false });
 
       if (error) {
         throw error;
       }
 
-      setLivestock(data || []);
+      setFeed(data || []);
     } catch (error: any) {
       toast({
-        title: 'Error fetching livestock',
+        title: 'Error fetching feed',
         description: error.message,
         variant: 'destructive',
       });
@@ -116,18 +115,17 @@ const LivestockTracking: React.FC = () => {
 
   const resetForm = () => {
     setFormData({
-      animal_type: '',
-      breed: '',
-      tag_number: '',
-      date_acquired: new Date().toISOString().split('T')[0],
-      acquisition_cost: '',
-      gender: '',
-      date_of_birth: '',
-      notes: '',
-      status: 'active'
+      feed_type: '',
+      quantity: '',
+      unit: '',
+      purchase_date: new Date().toISOString().split('T')[0],
+      expiration_date: '',
+      cost_per_unit: '',
+      supplier: '',
+      notes: ''
     });
     setIsEditing(false);
-    setCurrentLivestock(null);
+    setCurrentFeed(null);
   };
 
   const openAddDialog = () => {
@@ -135,18 +133,17 @@ const LivestockTracking: React.FC = () => {
     setIsOpen(true);
   };
 
-  const openEditDialog = (item: Livestock) => {
-    setCurrentLivestock(item);
+  const openEditDialog = (item: Feed) => {
+    setCurrentFeed(item);
     setFormData({
-      animal_type: item.animal_type,
-      breed: item.breed || '',
-      tag_number: item.tag_number || '',
-      date_acquired: item.date_acquired,
-      acquisition_cost: item.acquisition_cost?.toString() || '',
-      gender: item.gender || '',
-      date_of_birth: item.date_of_birth || '',
-      notes: item.notes || '',
-      status: item.status
+      feed_type: item.feed_type,
+      quantity: item.quantity.toString(),
+      unit: item.unit,
+      purchase_date: item.purchase_date,
+      expiration_date: item.expiration_date || '',
+      cost_per_unit: item.cost_per_unit.toString(),
+      supplier: item.supplier || '',
+      notes: item.notes || ''
     });
     setIsEditing(true);
     setIsOpen(true);
@@ -156,61 +153,57 @@ const LivestockTracking: React.FC = () => {
     e.preventDefault();
     
     try {
-      if (isEditing && currentLivestock) {
-        // Update existing livestock
+      if (isEditing && currentFeed) {
         const { error } = await supabase
-          .from('livestock')
+          .from('feed_inventory')
           .update({
-            animal_type: formData.animal_type,
-            breed: formData.breed || null,
-            tag_number: formData.tag_number || null,
-            date_acquired: formData.date_acquired,
-            acquisition_cost: formData.acquisition_cost ? parseFloat(formData.acquisition_cost) : null,
-            gender: formData.gender || null,
-            date_of_birth: formData.date_of_birth || null,
+            feed_type: formData.feed_type,
+            quantity: parseFloat(formData.quantity),
+            unit: formData.unit,
+            purchase_date: formData.purchase_date,
+            expiration_date: formData.expiration_date || null,
+            cost_per_unit: parseFloat(formData.cost_per_unit),
+            supplier: formData.supplier || null,
             notes: formData.notes || null,
-            status: formData.status,
             updated_at: new Date().toISOString()
           })
-          .eq('id', currentLivestock.id);
+          .eq('id', currentFeed.id);
 
         if (error) throw error;
         
         toast({
-          title: 'Livestock updated',
-          description: 'The livestock record has been updated successfully.',
+          title: 'Feed updated',
+          description: 'The feed record has been updated successfully.',
         });
       } else {
-        // Add new livestock
         const { error } = await supabase
-          .from('livestock')
+          .from('feed_inventory')
           .insert({
             user_id: user?.id,
-            animal_type: formData.animal_type,
-            breed: formData.breed || null,
-            tag_number: formData.tag_number || null,
-            date_acquired: formData.date_acquired,
-            acquisition_cost: formData.acquisition_cost ? parseFloat(formData.acquisition_cost) : null,
-            gender: formData.gender || null,
-            date_of_birth: formData.date_of_birth || null,
-            notes: formData.notes || null,
-            status: formData.status
+            feed_type: formData.feed_type,
+            quantity: parseFloat(formData.quantity),
+            unit: formData.unit,
+            purchase_date: formData.purchase_date,
+            expiration_date: formData.expiration_date || null,
+            cost_per_unit: parseFloat(formData.cost_per_unit),
+            supplier: formData.supplier || null,
+            notes: formData.notes || null
           });
 
         if (error) throw error;
         
         toast({
-          title: 'Livestock added',
-          description: 'The new livestock has been added successfully.',
+          title: 'Feed added',
+          description: 'The new feed has been added successfully.',
         });
       }
       
       setIsOpen(false);
       resetForm();
-      fetchLivestock();
+      fetchFeed();
     } catch (error: any) {
       toast({
-        title: isEditing ? 'Error updating livestock' : 'Error adding livestock',
+        title: isEditing ? 'Error updating feed' : 'Error adding feed',
         description: error.message,
         variant: 'destructive',
       });
@@ -218,24 +211,24 @@ const LivestockTracking: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this livestock record?')) {
+    if (window.confirm('Are you sure you want to delete this feed record?')) {
       try {
         const { error } = await supabase
-          .from('livestock')
+          .from('feed_inventory')
           .delete()
           .eq('id', id);
 
         if (error) throw error;
         
         toast({
-          title: 'Livestock deleted',
-          description: 'The livestock record has been deleted successfully.',
+          title: 'Feed deleted',
+          description: 'The feed record has been deleted successfully.',
         });
         
-        fetchLivestock();
+        fetchFeed();
       } catch (error: any) {
         toast({
-          title: 'Error deleting livestock',
+          title: 'Error deleting feed',
           description: error.message,
           variant: 'destructive',
         });
@@ -243,12 +236,11 @@ const LivestockTracking: React.FC = () => {
     }
   };
 
-  const filteredLivestock = livestock.filter(item => {
+  const filteredFeed = feed.filter(item => {
     const searchLower = searchQuery.toLowerCase();
     return (
-      item.animal_type.toLowerCase().includes(searchLower) ||
-      (item.breed && item.breed.toLowerCase().includes(searchLower)) ||
-      (item.tag_number && item.tag_number.toLowerCase().includes(searchLower))
+      item.feed_type.toLowerCase().includes(searchLower) ||
+      (item.supplier && item.supplier.toLowerCase().includes(searchLower))
     );
   });
 
@@ -257,39 +249,26 @@ const LivestockTracking: React.FC = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const getStatusBadgeColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'active':
-        return 'bg-green-500';
-      case 'sold':
-        return 'bg-blue-500';
-      case 'deceased':
-        return 'bg-gray-500';
-      default:
-        return 'bg-yellow-500';
-    }
-  };
-
   return (
     <PageContainer>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Livestock Tracking</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Feed Management</h1>
           <p className="text-muted-foreground">
-            Manage your livestock records
+            Manage your feed inventory and consumption
           </p>
         </div>
         <Button onClick={openAddDialog}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Livestock
+          Add Feed
         </Button>
       </div>
 
       <Card className="mb-6">
         <CardHeader className="pb-3">
-          <CardTitle>Livestock Management</CardTitle>
+          <CardTitle>Feed Inventory</CardTitle>
           <CardDescription>
-            Track and manage your farm animals with detailed records
+            Track and manage your livestock feed with detailed records
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -297,7 +276,7 @@ const LivestockTracking: React.FC = () => {
             <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search livestock..."
+                placeholder="Search feed..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -309,12 +288,12 @@ const LivestockTracking: React.FC = () => {
             <div className="flex justify-center items-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
-          ) : filteredLivestock.length === 0 ? (
+          ) : filteredFeed.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">No livestock records found</p>
+              <p className="text-muted-foreground">No feed records found</p>
               <Button variant="outline" className="mt-4" onClick={openAddDialog}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add your first livestock
+                Add your first feed
               </Button>
             </div>
           ) : (
@@ -322,26 +301,22 @@ const LivestockTracking: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Animal Type</TableHead>
-                    <TableHead>Tag/ID</TableHead>
-                    <TableHead>Breed</TableHead>
-                    <TableHead>Acquired</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Feed Type</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>Unit</TableHead>
+                    <TableHead>Purchase Date</TableHead>
+                    <TableHead>Expiration Date</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredLivestock.map((item) => (
+                  {filteredFeed.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.animal_type}</TableCell>
-                      <TableCell>{item.tag_number || 'N/A'}</TableCell>
-                      <TableCell>{item.breed || 'N/A'}</TableCell>
-                      <TableCell>{formatDate(item.date_acquired)}</TableCell>
-                      <TableCell>
-                        <Badge className={getStatusBadgeColor(item.status)}>
-                          {item.status}
-                        </Badge>
-                      </TableCell>
+                      <TableCell className="font-medium">{item.feed_type}</TableCell>
+                      <TableCell>{item.quantity}</TableCell>
+                      <TableCell>{item.unit}</TableCell>
+                      <TableCell>{formatDate(item.purchase_date)}</TableCell>
+                      <TableCell>{formatDate(item.expiration_date)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button variant="ghost" size="icon" onClick={() => openEditDialog(item)}>
@@ -366,82 +341,87 @@ const LivestockTracking: React.FC = () => {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>{isEditing ? 'Edit Livestock' : 'Add New Livestock'}</DialogTitle>
+            <DialogTitle>{isEditing ? 'Edit Feed' : 'Add New Feed'}</DialogTitle>
             <DialogDescription>
               {isEditing 
-                ? 'Update the details for this livestock record.' 
-                : 'Enter the details of the new livestock to add to your records.'}
+                ? 'Update the details for this feed record.' 
+                : 'Enter the details of the new feed to add to your inventory.'}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="animal_type">Animal Type <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="feed_type">Feed Type <span className="text-red-500">*</span></Label>
                   <Input
-                    id="animal_type"
-                    name="animal_type"
-                    placeholder="Chicken, Duck, etc."
-                    value={formData.animal_type}
+                    id="feed_type"
+                    name="feed_type"
+                    placeholder="Grain, Hay, etc."
+                    value={formData.feed_type}
                     onChange={handleInputChange}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="status">Status <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="quantity">Quantity <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="quantity"
+                    name="quantity"
+                    type="number"
+                    placeholder="Amount of feed"
+                    value={formData.quantity}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="unit">Unit <span className="text-red-500">*</span></Label>
                   <select
-                    id="status"
-                    name="status"
-                    value={formData.status}
+                    id="unit"
+                    name="unit"
+                    value={formData.unit}
                     onChange={handleInputChange}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     required
                   >
-                    <option value="active">Active</option>
-                    <option value="sold">Sold</option>
-                    <option value="deceased">Deceased</option>
-                    <option value="other">Other</option>
+                    <option value="kg">Kilogram (kg)</option>
+                    <option value="lbs">Pound (lbs)</option>
+                    <option value="tons">Ton (tons)</option>
+                    <option value="bales">Bales</option>
                   </select>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="tag_number">Tag/ID Number</Label>
+                  <Label htmlFor="cost_per_unit">Cost per Unit <span className="text-red-500">*</span></Label>
                   <div className="relative">
-                    <Tag className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
-                      id="tag_number"
-                      name="tag_number"
-                      placeholder="Identification number"
-                      value={formData.tag_number}
+                      id="cost_per_unit"
+                      name="cost_per_unit"
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={formData.cost_per_unit}
                       onChange={handleInputChange}
                       className="pl-10"
+                      required
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="breed">Breed</Label>
-                  <Input
-                    id="breed"
-                    name="breed"
-                    placeholder="Breed type"
-                    value={formData.breed}
-                    onChange={handleInputChange}
-                  />
-                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="date_acquired">Date Acquired <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="purchase_date">Purchase Date <span className="text-red-500">*</span></Label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
-                      id="date_acquired"
-                      name="date_acquired"
+                      id="purchase_date"
+                      name="purchase_date"
                       type="date"
-                      value={formData.date_acquired}
+                      value={formData.purchase_date}
                       onChange={handleInputChange}
                       className="pl-10"
                       required
@@ -449,14 +429,14 @@ const LivestockTracking: React.FC = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="date_of_birth">Date of Birth</Label>
+                  <Label htmlFor="expiration_date">Expiration Date</Label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
-                      id="date_of_birth"
-                      name="date_of_birth"
+                      id="expiration_date"
+                      name="expiration_date"
                       type="date"
-                      value={formData.date_of_birth}
+                      value={formData.expiration_date}
                       onChange={handleInputChange}
                       className="pl-10"
                     />
@@ -464,38 +444,15 @@ const LivestockTracking: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="acquisition_cost">Acquisition Cost</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="acquisition_cost"
-                      name="acquisition_cost"
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={formData.acquisition_cost}
-                      onChange={handleInputChange}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="gender">Gender</Label>
-                  <select
-                    id="gender"
-                    name="gender"
-                    value={formData.gender || ''}
-                    onChange={handleInputChange}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  >
-                    <option value="">Select gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="unknown">Unknown</option>
-                  </select>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="supplier">Supplier</Label>
+                <Input
+                  id="supplier"
+                  name="supplier"
+                  placeholder="Feed supplier"
+                  value={formData.supplier}
+                  onChange={handleInputChange}
+                />
               </div>
 
               <div className="space-y-2">
@@ -515,7 +472,7 @@ const LivestockTracking: React.FC = () => {
                 Cancel
               </Button>
               <Button type="submit">
-                {isEditing ? 'Update' : 'Add'} Livestock
+                {isEditing ? 'Update' : 'Add'} Feed
               </Button>
             </DialogFooter>
           </form>
@@ -525,4 +482,4 @@ const LivestockTracking: React.FC = () => {
   );
 };
 
-export default LivestockTracking;
+export default FeedManagement;
