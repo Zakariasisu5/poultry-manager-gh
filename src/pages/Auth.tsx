@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthContext } from '@/hooks/useAuthContext';
@@ -9,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, Egg } from 'lucide-react';
 
 const Auth = () => {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword, session, isLoading } = useAuthContext();
@@ -22,7 +22,6 @@ const Auth = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Redirect if already authenticated
     if (session && !isLoading) {
       navigate('/');
     }
@@ -91,18 +90,7 @@ const Auth = () => {
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-4">
               <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-6 w-6 text-primary-foreground"
-                >
-                  <path d="M11.767 19.089c4.924.868 6.14-6.025 1.216-6.894m-1.216 6.894L5.86 18.047m5.908 1.042-.347 1.97m1.563-8.864c4.924.869 6.14-6.025 1.215-6.893m-1.215 6.893-3.94-.694m5.155-6.2L12.18 4.34" />
-                </svg>
+                <Egg className="h-6 w-6 text-primary-foreground" />
               </div>
             </div>
             <CardTitle className="text-2xl font-bold">Welcome to PoultryPro</CardTitle>
@@ -278,8 +266,9 @@ const Auth = () => {
                 </span>
               </div>
             </div>
-            <Button variant="ghost" onClick={() => navigate('/')}>
-              Explore as Guest
+            <Button variant="ghost" onClick={() => navigate('/welcome')}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Home
             </Button>
           </CardContent>
           <CardFooter className="flex flex-col space-y-2 text-center text-sm text-muted-foreground">
