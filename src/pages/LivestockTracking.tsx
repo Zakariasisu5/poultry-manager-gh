@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { 
@@ -170,7 +171,7 @@ const LivestockTracking: React.FC = () => {
             date_of_birth: formData.date_of_birth || null,
             notes: formData.notes || null,
             status: formData.status,
-            updated_at: new Date().toISOString()
+            updated_at: new Date()
           })
           .eq('id', currentLivestock.id);
 

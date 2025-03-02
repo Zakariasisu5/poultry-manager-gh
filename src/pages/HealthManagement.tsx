@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { 
@@ -184,7 +185,7 @@ const HealthManagement: React.FC = () => {
     
     try {
       if (isEditing && currentRecord) {
-        // Update existing health record
+        // Update existing record
         const { error } = await supabase
           .from('health_records')
           .update({
@@ -195,7 +196,7 @@ const HealthManagement: React.FC = () => {
             dosage: formData.dosage || null,
             treatment_cost: formData.treatment_cost ? parseFloat(formData.treatment_cost) : null,
             notes: formData.notes || null,
-            updated_at: new Date().toISOString()
+            updated_at: new Date()
           })
           .eq('id', currentRecord.id);
 
@@ -206,7 +207,7 @@ const HealthManagement: React.FC = () => {
           description: 'The health record has been updated successfully.',
         });
       } else {
-        // Add new health record
+        // Add new record
         const { error } = await supabase
           .from('health_records')
           .insert({
