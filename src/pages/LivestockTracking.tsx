@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { 
@@ -165,9 +164,7 @@ const LivestockTracking: React.FC = () => {
             animal_type: formData.animal_type,
             breed: formData.breed || null,
             tag_number: formData.tag_number || null,
-            date_acquired: formData.date_acquired instanceof Date 
-              ? formData.date_acquired.toISOString().split('T')[0] 
-              : formData.date_acquired,
+            date_acquired: formData.date_acquired,
             acquisition_cost: formData.acquisition_cost ? parseFloat(formData.acquisition_cost) : null,
             gender: formData.gender || null,
             date_of_birth: formData.date_of_birth || null,
@@ -192,9 +189,7 @@ const LivestockTracking: React.FC = () => {
             animal_type: formData.animal_type,
             breed: formData.breed || null,
             tag_number: formData.tag_number || null,
-            date_acquired: formData.date_acquired instanceof Date 
-              ? formData.date_acquired.toISOString().split('T')[0] 
-              : formData.date_acquired,
+            date_acquired: formData.date_acquired,
             acquisition_cost: formData.acquisition_cost ? parseFloat(formData.acquisition_cost) : null,
             gender: formData.gender || null,
             date_of_birth: formData.date_of_birth || null,
