@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { 
@@ -189,7 +190,9 @@ const HealthManagement: React.FC = () => {
           .from('health_records')
           .update({
             livestock_id: formData.livestock_id,
-            record_date: formData.record_date,
+            record_date: formData.record_date instanceof Date 
+              ? formData.record_date.toISOString().split('T')[0] 
+              : formData.record_date,
             record_type: formData.record_type,
             medication: formData.medication || null,
             dosage: formData.dosage || null,
@@ -212,7 +215,9 @@ const HealthManagement: React.FC = () => {
           .insert({
             user_id: user?.id,
             livestock_id: formData.livestock_id,
-            record_date: formData.record_date,
+            record_date: formData.record_date instanceof Date 
+              ? formData.record_date.toISOString().split('T')[0] 
+              : formData.record_date,
             record_type: formData.record_type,
             medication: formData.medication || null,
             dosage: formData.dosage || null,

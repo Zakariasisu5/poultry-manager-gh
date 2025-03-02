@@ -7,7 +7,7 @@ import {
   Search,
   Calendar,
   DollarSign,
-  Package,
+  Package, // Changed from 'Sack' to 'Package'
   ShoppingBag
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -63,6 +63,7 @@ const FeedManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
+  // Form state
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentFeed, setCurrentFeed] = useState<Feed | null>(null);
@@ -154,14 +155,19 @@ const FeedManagement: React.FC = () => {
     
     try {
       if (isEditing && currentFeed) {
+        // Update existing feed
         const { error } = await supabase
           .from('feed_inventory')
           .update({
             feed_type: formData.feed_type,
             quantity: parseFloat(formData.quantity),
             unit: formData.unit,
-            purchase_date: formData.purchase_date,
-            expiration_date: formData.expiration_date || null,
+            purchase_date: formData.purchase_date instanceof Date 
+              ? formData.purchase_date.toISOString().split('T')[0] 
+              : formData.purchase_date,
+            expiration_date: formData.expiration_date instanceof Date 
+              ? formData.expiration_date.toISOString().split('T')[0] 
+              : formData.expiration_date,
             cost_per_unit: parseFloat(formData.cost_per_unit),
             supplier: formData.supplier || null,
             notes: formData.notes || null,
@@ -176,6 +182,7 @@ const FeedManagement: React.FC = () => {
           description: 'The feed record has been updated successfully.',
         });
       } else {
+        // Add new feed
         const { error } = await supabase
           .from('feed_inventory')
           .insert({
@@ -183,8 +190,12 @@ const FeedManagement: React.FC = () => {
             feed_type: formData.feed_type,
             quantity: parseFloat(formData.quantity),
             unit: formData.unit,
-            purchase_date: formData.purchase_date,
-            expiration_date: formData.expiration_date || null,
+            purchase_date: formData.purchase_date instanceof Date 
+              ? formData.purchase_date.toISOString().split('T')[0] 
+              : formData.purchase_date,
+            expiration_date: formData.expiration_date instanceof Date 
+              ? formData.expiration_date.toISOString().split('T')[0] 
+              : formData.expiration_date,
             cost_per_unit: parseFloat(formData.cost_per_unit),
             supplier: formData.supplier || null,
             notes: formData.notes || null
