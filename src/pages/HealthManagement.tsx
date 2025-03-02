@@ -185,18 +185,20 @@ const HealthManagement: React.FC = () => {
     
     try {
       if (isEditing && currentRecord) {
-        // Update existing record
+        // Update existing health record
         const { error } = await supabase
           .from('health_records')
           .update({
             livestock_id: formData.livestock_id,
-            record_date: formData.record_date,
+            record_date: formData.record_date instanceof Date 
+              ? formData.record_date.toISOString().split('T')[0] 
+              : formData.record_date,
             record_type: formData.record_type,
             medication: formData.medication || null,
             dosage: formData.dosage || null,
             treatment_cost: formData.treatment_cost ? parseFloat(formData.treatment_cost) : null,
             notes: formData.notes || null,
-            updated_at: new Date()
+            updated_at: new Date().toISOString()
           })
           .eq('id', currentRecord.id);
 
@@ -207,13 +209,15 @@ const HealthManagement: React.FC = () => {
           description: 'The health record has been updated successfully.',
         });
       } else {
-        // Add new record
+        // Add new health record
         const { error } = await supabase
           .from('health_records')
           .insert({
             user_id: user?.id,
             livestock_id: formData.livestock_id,
-            record_date: formData.record_date,
+            record_date: formData.record_date instanceof Date 
+              ? formData.record_date.toISOString().split('T')[0] 
+              : formData.record_date,
             record_type: formData.record_type,
             medication: formData.medication || null,
             dosage: formData.dosage || null,
