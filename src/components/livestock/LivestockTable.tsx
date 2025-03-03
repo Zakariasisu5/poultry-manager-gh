@@ -2,7 +2,7 @@
 import React from "react";
 import { Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Livestock } from "@/pages/LivestockTracking";
+import { Livestock } from "@/types/livestock";
 import { format } from "date-fns";
 import {
   Card,

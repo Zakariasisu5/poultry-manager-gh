@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { PageContainer } from '@/components/layout/PageContainer';
@@ -18,16 +17,16 @@ import {
 } from '@/components/ui/dialog';
 import { LivestockForm } from '@/components/livestock/LivestockForm';
 import { useAuthContext } from '@/hooks/useAuthContext';
-import { Tables } from '@/integrations/supabase/types';
+import { Livestock } from '@/types/livestock';
 
 const LivestockTracking = () => {
-  const [livestock, setLivestock] = useState<Tables<'livestock'>[]>([]);
-  const [filteredLivestock, setFilteredLivestock] = useState<Tables<'livestock'>[]>([]);
+  const [livestock, setLivestock] = useState<Livestock[]>([]);
+  const [filteredLivestock, setFilteredLivestock] = useState<Livestock[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingLivestock, setEditingLivestock] = useState<Tables<'livestock'> | null>(null);
+  const [editingLivestock, setEditingLivestock] = useState<Livestock | null>(null);
   const { toast } = useToast();
   const { user } = useAuthContext();
 
@@ -100,7 +99,7 @@ const LivestockTracking = () => {
     setIsFormOpen(true);
   };
 
-  const handleEditLivestock = (livestock: Tables<'livestock'>) => {
+  const handleEditLivestock = (livestock: Livestock) => {
     setEditingLivestock(livestock);
     setIsFormOpen(true);
   };
@@ -110,7 +109,7 @@ const LivestockTracking = () => {
     setEditingLivestock(null);
   };
 
-  const handleFormSubmit = async (formData: Partial<Tables<'livestock'>>) => {
+  const handleFormSubmit = async (formData: Partial<Livestock>) => {
     try {
       if (editingLivestock) {
         // Update existing livestock
@@ -126,10 +125,26 @@ const LivestockTracking = () => {
           description: 'Livestock has been updated successfully.',
         });
       } else {
-        // Add new livestock
+        // Add new livestock - ensure required fields are present
+        if (!formData.animal_type || !formData.date_acquired) {
+          throw new Error('Animal type and date acquired are required');
+        }
+        
+        // Add new livestock with required fields
         const { error } = await supabase
           .from('livestock')
-          .insert([{ ...formData, user_id: user?.id }]);
+          .insert({
+            animal_type: formData.animal_type,
+            date_acquired: formData.date_acquired,
+            user_id: user?.id,
+            breed: formData.breed,
+            tag_number: formData.tag_number,
+            gender: formData.gender,
+            date_of_birth: formData.date_of_birth,
+            acquisition_cost: formData.acquisition_cost,
+            status: formData.status || 'active',
+            notes: formData.notes
+          });
 
         if (error) throw error;
         

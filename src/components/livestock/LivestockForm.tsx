@@ -4,11 +4,11 @@ import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Livestock } from "@/pages/LivestockTracking";
+import { Livestock } from "@/types/livestock";
 
 interface LivestockFormProps {
   initialData?: Livestock;
-  onSubmit: (data: Omit<Livestock, "id">) => void;
+  onSubmit: (data: Partial<Livestock>) => void;
   onCancel: () => void;
 }
 
@@ -17,7 +17,7 @@ export function LivestockForm({
   onSubmit,
   onCancel,
 }: LivestockFormProps) {
-  const { register, handleSubmit, formState: { errors } } = useForm<Omit<Livestock, "id">>({
+  const { register, handleSubmit, formState: { errors } } = useForm<Partial<Livestock>>({
     defaultValues: initialData ? {
       animal_type: initialData.animal_type,
       tag_number: initialData.tag_number || "",

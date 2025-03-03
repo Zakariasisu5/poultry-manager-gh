@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import EggProjection from "./pages/EggProjection";
 import LandingPage from "./pages/LandingPage";
+import LivestockTracking from "./pages/LivestockTracking";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./components/theme-provider";
 import { useAuthContext } from "./hooks/useAuthContext";
@@ -56,6 +57,11 @@ const App = () => (
               <Route path="/egg-projection" element={
                 <ProtectedRoute>
                   <EggProjection />
+                </ProtectedRoute>
+              } />
+              <Route path="/livestock" element={
+                <ProtectedRoute>
+                  <LivestockTracking />
                 </ProtectedRoute>
               } />
               
