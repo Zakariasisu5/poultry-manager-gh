@@ -1,238 +1,240 @@
 
-import React, { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { PageContainer } from "@/components/layout/PageContainer";
-import { LivestockTable } from "@/components/livestock/LivestockTable";
-import { LivestockForm } from "@/components/livestock/LivestockForm";
-import { LivestockSummary } from "@/components/livestock/LivestockSummary";
-import { Button } from "@/components/ui/button";
-import { 
+import React, { useState, useEffect } from 'react';
+import { useToast } from '@/components/ui/use-toast';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { LivestockTable } from '@/components/livestock/LivestockTable';
+import { LivestockSummary } from '@/components/livestock/LivestockSummary';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle 
-} from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
-import { Plus } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-
-export interface Livestock {
-  id: string;
-  animal_type: string;
-  tag_number: string | null;
-  breed: string | null;
-  gender: string | null;
-  date_of_birth: string | null;
-  date_acquired: string;
-  acquisition_cost: number | null;
-  status: string;
-  notes: string | null;
-}
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { LivestockForm } from '@/components/livestock/LivestockForm';
+import { useAuthContext } from '@/hooks/useAuthContext';
+import { Tables } from '@/integrations/supabase/types';
 
 const LivestockTracking = () => {
-  const { toast } = useToast();
-  const { user } = useAuth();
-  const [livestock, setLivestock] = useState<Livestock[]>([]);
+  const [livestock, setLivestock] = useState<Tables<'livestock'>[]>([]);
+  const [filteredLivestock, setFilteredLivestock] = useState<Tables<'livestock'>[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editingLivestock, setEditingLivestock] = useState<Livestock | null>(null);
-  const [filterValue, setFilterValue] = useState("");
-  const [filterType, setFilterType] = useState("all");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('all');
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingLivestock, setEditingLivestock] = useState<Tables<'livestock'> | null>(null);
+  const { toast } = useToast();
+  const { user } = useAuthContext();
 
   useEffect(() => {
-    if (user) {
-      fetchLivestock();
-    }
-  }, [user]);
+    fetchLivestock();
+  }, []);
+
+  useEffect(() => {
+    filterLivestock();
+  }, [livestock, searchQuery, activeTab]);
 
   const fetchLivestock = async () => {
-    setIsLoading(true);
     try {
+      setIsLoading(true);
+      
+      if (!user) return;
+
       const { data, error } = await supabase
-        .from("livestock")
-        .select("*")
-        .eq("user_id", user?.id)
-        .order("date_acquired", { ascending: false });
+        .from('livestock')
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (error) {
-        console.error("Error fetching livestock:", error);
+        console.error('Error fetching livestock:', error);
         toast({
-          title: "Error",
-          description: "Failed to fetch livestock data",
-          variant: "destructive",
+          title: 'Error fetching livestock',
+          description: error.message,
+          variant: 'destructive',
         });
-      } else {
-        setLivestock(data || []);
+        return;
       }
-    } catch (error) {
-      console.error("Error:", error);
+
+      setLivestock(data || []);
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast({
+        title: 'An error occurred',
+        description: error.message,
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleAdd = () => {
-    setEditingLivestock(null);
-    setOpenDialog(true);
-  };
+  const filterLivestock = () => {
+    let filtered = [...livestock];
 
-  const handleEdit = (livestock: Livestock) => {
-    setEditingLivestock(livestock);
-    setOpenDialog(true);
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from("livestock")
-        .delete()
-        .eq("id", id)
-        .eq("user_id", user?.id);
-
-      if (error) {
-        console.error("Error deleting livestock:", error);
-        toast({
-          title: "Error",
-          description: "Failed to delete livestock",
-          variant: "destructive",
-        });
-      } else {
-        setLivestock(livestock.filter(item => item.id !== id));
-        toast({
-          title: "Success",
-          description: "Livestock deleted successfully",
-        });
-      }
-    } catch (error) {
-      console.error("Error:", error);
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (animal) =>
+          animal.animal_type.toLowerCase().includes(query) ||
+          (animal.breed && animal.breed.toLowerCase().includes(query)) ||
+          (animal.tag_number && animal.tag_number.toLowerCase().includes(query))
+      );
     }
+
+    // Filter by status
+    if (activeTab !== 'all') {
+      filtered = filtered.filter((animal) => animal.status === activeTab);
+    }
+
+    setFilteredLivestock(filtered);
   };
 
-  const handleSubmit = async (data: Omit<Livestock, "id">) => {
+  const handleAddLivestock = () => {
+    setEditingLivestock(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEditLivestock = (livestock: Tables<'livestock'>) => {
+    setEditingLivestock(livestock);
+    setIsFormOpen(true);
+  };
+
+  const handleFormClose = () => {
+    setIsFormOpen(false);
+    setEditingLivestock(null);
+  };
+
+  const handleFormSubmit = async (formData: Partial<Tables<'livestock'>>) => {
     try {
       if (editingLivestock) {
         // Update existing livestock
         const { error } = await supabase
-          .from("livestock")
-          .update(data)
-          .eq("id", editingLivestock.id)
-          .eq("user_id", user?.id);
+          .from('livestock')
+          .update(formData)
+          .eq('id', editingLivestock.id);
 
-        if (error) {
-          console.error("Error updating livestock:", error);
-          toast({
-            title: "Error",
-            description: "Failed to update livestock",
-            variant: "destructive",
-          });
-        } else {
-          fetchLivestock();
-          setOpenDialog(false);
-          toast({
-            title: "Success",
-            description: "Livestock updated successfully",
-          });
-        }
+        if (error) throw error;
+        
+        toast({
+          title: 'Livestock updated',
+          description: 'Livestock has been updated successfully.',
+        });
       } else {
         // Add new livestock
         const { error } = await supabase
-          .from("livestock")
-          .insert([{ ...data, user_id: user?.id }]);
+          .from('livestock')
+          .insert([{ ...formData, user_id: user?.id }]);
 
-        if (error) {
-          console.error("Error adding livestock:", error);
-          toast({
-            title: "Error",
-            description: "Failed to add livestock",
-            variant: "destructive",
-          });
-        } else {
-          fetchLivestock();
-          setOpenDialog(false);
-          toast({
-            title: "Success",
-            description: "Livestock added successfully",
-          });
-        }
+        if (error) throw error;
+        
+        toast({
+          title: 'Livestock added',
+          description: 'New livestock has been added successfully.',
+        });
       }
-    } catch (error) {
-      console.error("Error:", error);
+      
+      // Refresh the livestock data
+      fetchLivestock();
+      handleFormClose();
+    } catch (error: any) {
+      console.error('Error saving livestock:', error);
+      toast({
+        title: 'Error saving livestock',
+        description: error.message,
+        variant: 'destructive',
+      });
     }
   };
 
-  const filteredLivestock = livestock.filter(animal => {
-    const matchesSearch = 
-      animal.tag_number?.toLowerCase().includes(filterValue.toLowerCase()) ||
-      animal.animal_type.toLowerCase().includes(filterValue.toLowerCase()) ||
-      animal.breed?.toLowerCase().includes(filterValue.toLowerCase()) ||
-      animal.status.toLowerCase().includes(filterValue.toLowerCase());
-    
-    if (filterType === "all") return matchesSearch;
-    
-    return matchesSearch && animal.status.toLowerCase() === filterType.toLowerCase();
-  });
+  const handleDeleteLivestock = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('livestock')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast({
+        title: 'Livestock deleted',
+        description: 'Livestock has been deleted successfully.',
+      });
+      
+      // Refresh the livestock data
+      fetchLivestock();
+    } catch (error: any) {
+      console.error('Error deleting livestock:', error);
+      toast({
+        title: 'Error deleting livestock',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
-    <PageContainer title="Livestock Tracking" 
-      subtitle="Manage and monitor your farm's livestock">
-      
-      <div className="mb-6">
-        <LivestockSummary livestock={livestock} />
-      </div>
-      
-      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center">
-          <div className="relative">
-            <input
-              type="text"
+    <PageContainer>
+      <div className="flex flex-col gap-6">
+        <div>
+          <h1 className="text-3xl font-bold">Livestock Tracking</h1>
+          <p className="text-muted-foreground">Manage your livestock inventory and track your animals.</p>
+        </div>
+
+        {!isLoading && (
+          <LivestockSummary livestock={livestock} />
+        )}
+
+        <div className="flex flex-col sm:flex-row justify-between gap-4">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
               placeholder="Search livestock..."
-              value={filterValue}
-              onChange={(e) => setFilterValue(e.target.value)}
-              className="h-10 w-full rounded-md border border-input px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="pl-8"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="h-10 rounded-md border border-input px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="sold">Sold</option>
-            <option value="deceased">Deceased</option>
-            <option value="transferred">Transferred</option>
-          </select>
+          <Button onClick={handleAddLivestock}>Add Livestock</Button>
         </div>
-        <Button onClick={handleAdd} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Livestock
-        </Button>
+
+        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="active">Active</TabsTrigger>
+            <TabsTrigger value="sold">Sold</TabsTrigger>
+            <TabsTrigger value="deceased">Deceased</TabsTrigger>
+          </TabsList>
+          <TabsContent value={activeTab}>
+            <LivestockTable 
+              livestock={filteredLivestock} 
+              isLoading={isLoading}
+              onEdit={handleEditLivestock}
+              onDelete={handleDeleteLivestock}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
-      <LivestockTable 
-        livestock={filteredLivestock}
-        isLoading={isLoading}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
-
-      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <DialogContent className="max-w-2xl">
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>
-              {editingLivestock ? "Edit Livestock" : "Add New Livestock"}
-            </DialogTitle>
+            <DialogTitle>{editingLivestock ? 'Edit Livestock' : 'Add New Livestock'}</DialogTitle>
             <DialogDescription>
               {editingLivestock 
-                ? "Update the information for this livestock"
-                : "Fill in the details to add a new livestock to your farm"}
+                ? 'Update the details for this livestock.' 
+                : 'Enter the details for your new livestock.'}
             </DialogDescription>
           </DialogHeader>
           <LivestockForm 
+            onSubmit={handleFormSubmit} 
+            onCancel={handleFormClose}
             initialData={editingLivestock || undefined}
-            onSubmit={handleSubmit}
-            onCancel={() => setOpenDialog(false)}
           />
         </DialogContent>
       </Dialog>

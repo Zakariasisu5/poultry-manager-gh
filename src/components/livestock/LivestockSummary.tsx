@@ -1,83 +1,77 @@
 
-import React from "react";
-import { Livestock } from "@/pages/LivestockTracking";
-import { DashboardCard } from "@/components/dashboard/DashboardCard";
-import { Cow, DollarSign, Users } from "lucide-react";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tables } from '@/integrations/supabase/types';
+import { Bird, PiggyBank, BarChartHorizontal } from 'lucide-react';
 
 interface LivestockSummaryProps {
-  livestock: Livestock[];
+  livestock: Tables<'livestock'>[];
 }
 
 export function LivestockSummary({ livestock }: LivestockSummaryProps) {
-  // Calculate summary statistics
   const totalLivestock = livestock.length;
-  const activeLivestock = livestock.filter(animal => animal.status === "active").length;
   
-  // Calculate total investment
+  const activeLivestock = livestock.filter(animal => animal.status === 'active').length;
+  
+  const livestockTypes = [...new Set(livestock.map(animal => animal.animal_type))].length;
+  
   const totalInvestment = livestock.reduce((sum, animal) => {
     return sum + (animal.acquisition_cost || 0);
   }, 0);
 
-  // Count animal types
-  const animalTypeCounts: Record<string, number> = {};
-  livestock.forEach(animal => {
-    const type = animal.animal_type;
-    animalTypeCounts[type] = (animalTypeCounts[type] || 0) + 1;
-  });
-
-  // Get top 3 animal types
-  const topAnimalTypes = Object.entries(animalTypeCounts)
-    .sort(([, countA], [, countB]) => countB - countA)
-    .slice(0, 3);
-
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-      <DashboardCard title="Total Livestock" className="bg-blue-50">
-        <div className="flex items-center gap-4">
-          <div className="rounded-full bg-blue-100 p-3">
-            <Users className="h-6 w-6 text-blue-600" />
-          </div>
-          <div>
-            <p className="text-3xl font-bold">{totalLivestock}</p>
-            <p className="text-sm text-muted-foreground">
-              {activeLivestock} active
-            </p>
-          </div>
-        </div>
-      </DashboardCard>
-
-      <DashboardCard title="Total Investment" className="bg-green-50">
-        <div className="flex items-center gap-4">
-          <div className="rounded-full bg-green-100 p-3">
-            <DollarSign className="h-6 w-6 text-green-600" />
-          </div>
-          <div>
-            <p className="text-3xl font-bold">${totalInvestment.toFixed(2)}</p>
-            <p className="text-sm text-muted-foreground">
-              Total acquisition cost
-            </p>
-          </div>
-        </div>
-      </DashboardCard>
-
-      <DashboardCard title="Animal Types" className="bg-purple-50">
-        <div className="flex items-center gap-4">
-          <div className="rounded-full bg-purple-100 p-3">
-            <Cow className="h-6 w-6 text-purple-600" />
-          </div>
-          <div>
-            <p className="text-3xl font-bold">{Object.keys(animalTypeCounts).length}</p>
-            <div className="text-sm text-muted-foreground">
-              {topAnimalTypes.map(([type, count], index) => (
-                <span key={type}>
-                  {type} ({count})
-                  {index < topAnimalTypes.length - 1 ? ", " : ""}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </DashboardCard>
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Livestock</CardTitle>
+          <BarChartHorizontal className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{totalLivestock}</div>
+          <p className="text-xs text-muted-foreground">
+            Total animals tracked
+          </p>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Active Livestock</CardTitle>
+          <Bird className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{activeLivestock}</div>
+          <p className="text-xs text-muted-foreground">
+            Currently active animals
+          </p>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Livestock Types</CardTitle>
+          <Bird className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{livestockTypes}</div>
+          <p className="text-xs text-muted-foreground">
+            Different types of animals
+          </p>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Investment</CardTitle>
+          <PiggyBank className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">${totalInvestment.toFixed(2)}</div>
+          <p className="text-xs text-muted-foreground">
+            Total acquisition cost
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
