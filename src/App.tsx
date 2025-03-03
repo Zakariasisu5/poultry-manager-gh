@@ -11,6 +11,7 @@ import EggProjection from "./pages/EggProjection";
 import LandingPage from "./pages/LandingPage";
 import LivestockTracking from "./pages/LivestockTracking";
 import HealthManagement from "./pages/HealthManagement";
+import FeedManagement from "./pages/FeedManagement";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./components/theme-provider";
 import { useAuthContext } from "./hooks/useAuthContext";
@@ -68,6 +69,11 @@ const App = () => (
               <Route path="/health" element={
                 <ProtectedRoute>
                   <HealthManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/feed" element={
+                <ProtectedRoute>
+                  <FeedManagement />
                 </ProtectedRoute>
               } />
               
