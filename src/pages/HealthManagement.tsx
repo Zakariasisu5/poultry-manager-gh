@@ -9,7 +9,9 @@ import { HealthSummary } from "@/components/health/HealthSummary";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/hooks/useAuthContext";
+import { Livestock, HealthRecord as HealthRecordType } from "@/types/livestock";
 
+// This type for temporary use only in this component, using proper Supabase type from livestock.ts
 export type HealthRecord = {
   id: string;
   livestock_id: string;
@@ -75,7 +77,7 @@ const HealthManagement = () => {
         });
         return [];
       }
-      return data || [];
+      return data as Pick<Livestock, 'id' | 'animal_type' | 'tag_number' | 'breed'>[] || [];
     },
     enabled: !!userId,
   });

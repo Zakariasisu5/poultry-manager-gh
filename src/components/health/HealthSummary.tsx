@@ -1,8 +1,8 @@
 
-import { HealthRecord } from "@/pages/HealthManagement";
+import { HealthRecord } from "@/types/livestock";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, Calendar, DollarSign, LineChart, Pill, Syringe } from "lucide-react";
-import { Chart } from "@/components/ui/chart";
+import { PieChart, Pie, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 
 interface HealthSummaryProps {
   healthRecords: any[];
@@ -105,6 +105,16 @@ export function HealthSummary({ healthRecords, isLoading }: HealthSummaryProps) 
     };
   });
 
+  // Colors for chart
+  const COLORS = [
+    "#10B981", // Green for vaccinations
+    "#3B82F6", // Blue for medications
+    "#EF4444", // Red for illness
+    "#F97316", // Orange for injury
+    "#8B5CF6", // Purple for routine_check
+    "#6B7280", // Gray for other
+  ];
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -171,21 +181,27 @@ export function HealthSummary({ healthRecords, isLoading }: HealthSummaryProps) 
             <CardTitle>Health Record Types</CardTitle>
           </CardHeader>
           <CardContent>
-            <Chart
-              type="pie"
-              data={recordTypeData}
-              dataKey="value"
-              nameKey="name"
-              height={300}
-              colors={[
-                "#10B981", // Green for vaccinations
-                "#3B82F6", // Blue for medications
-                "#EF4444", // Red for illness
-                "#F97316", // Orange for injury
-                "#8B5CF6", // Purple for routine_check
-                "#6B7280", // Gray for other
-              ]}
-            />
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={recordTypeData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                  nameKey="name"
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                >
+                  {recordTypeData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => [value, 'Records']} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
 
@@ -194,19 +210,29 @@ export function HealthSummary({ healthRecords, isLoading }: HealthSummaryProps) 
             <CardTitle>Monthly Health Trends</CardTitle>
           </CardHeader>
           <CardContent>
-            <Chart
-              type="bar"
-              data={monthlyData}
-              categories={["records", "cost"]}
-              index="name"
-              height={300}
-              colors={["#10B981", "#3B82F6"]}
-              valueFormatter={(value) => 
-                value.toString().includes(".") ? `$${value}` : value
-              }
-              showLegend={true}
-              legendLabels={["Records", "Cost ($)"]}
-            />
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart
+                data={monthlyData}
+                margin={{
+                  top: 5,
+                  right: 30,
+                  left: 20,
+                  bottom: 5,
+                }}
+              >
+                <XAxis dataKey="name" />
+                <YAxis yAxisId="left" orientation="left" />
+                <YAxis yAxisId="right" orientation="right" />
+                <Tooltip 
+                  formatter={(value, name) => {
+                    return name === 'cost' ? [`$${value}`, 'Cost'] : [value, 'Records'];
+                  }}
+                />
+                <Legend />
+                <Bar yAxisId="left" dataKey="records" fill="#10B981" name="Records" />
+                <Bar yAxisId="right" dataKey="cost" fill="#3B82F6" name="Cost ($)" />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>

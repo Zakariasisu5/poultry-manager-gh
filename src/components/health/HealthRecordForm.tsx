@@ -11,14 +11,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Livestock } from "@/types/livestock";
-import { HealthRecord } from "@/pages/HealthManagement";
+import { Livestock, HealthRecord } from "@/types/livestock";
+import { HealthRecord as HealthRecordPage } from "@/pages/HealthManagement";
 
 interface HealthRecordFormProps {
-  livestock: Livestock[];
+  livestock: Pick<Livestock, 'id' | 'animal_type' | 'tag_number' | 'breed'>[];
   isLoading: boolean;
-  onSave: (record: Partial<HealthRecord>) => void;
-  record: HealthRecord | null;
+  onSave: (record: Partial<HealthRecordPage>) => void;
+  record: HealthRecordPage | null;
   onCancel: () => void;
 }
 
