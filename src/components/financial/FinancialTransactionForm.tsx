@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -101,7 +100,6 @@ export function FinancialTransactionForm({ onTransactionAdded }: FinancialTransa
     
     setLoading(true);
     try {
-      // Create a transaction object that includes the user_id
       const transaction: FinancialTransactionFormData = {
         transaction_date: format(values.transaction_date, "yyyy-MM-dd"),
         transaction_type: values.transaction_type,
