@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { Livestock } from "@/types/livestock";
+import { Livestock, FinancialTransactionFormData } from "@/types/livestock";
 import { useAuthContext } from "@/hooks/useAuthContext";
 
 interface FinancialTransactionFormProps {
@@ -101,7 +101,8 @@ export function FinancialTransactionForm({ onTransactionAdded }: FinancialTransa
     
     setLoading(true);
     try {
-      const { error } = await supabase.from("financial_transactions").insert({
+      // Create a transaction object that includes the user_id
+      const transaction: FinancialTransactionFormData = {
         transaction_date: format(values.transaction_date, "yyyy-MM-dd"),
         transaction_type: values.transaction_type,
         category: values.category,
@@ -109,7 +110,11 @@ export function FinancialTransactionForm({ onTransactionAdded }: FinancialTransa
         description: values.description || null,
         related_livestock_id: values.related_livestock_id || null,
         user_id: user.id,
-      });
+      };
+
+      const { error } = await supabase
+        .from("financial_transactions")
+        .insert(transaction);
 
       if (error) {
         throw error;
@@ -125,12 +130,18 @@ export function FinancialTransactionForm({ onTransactionAdded }: FinancialTransa
       });
 
       onTransactionAdded();
+      
+      toast({
+        title: "Success",
+        description: "Transaction added successfully",
+      });
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message || "Failed to add financial transaction",
         variant: "destructive",
       });
+      console.error("Transaction error:", error);
     } finally {
       setLoading(false);
     }
@@ -276,7 +287,7 @@ export function FinancialTransactionForm({ onTransactionAdded }: FinancialTransa
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {livestock?.map((animal) => (
                         <SelectItem key={animal.id} value={animal.id}>
                           {animal.tag_number || 'Unknown'} - {animal.animal_type} {animal.breed ? `(${animal.breed})` : ''}
