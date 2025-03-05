@@ -38,3 +38,29 @@ export interface UserProfile {
   updated_at?: string;
   created_at?: string;
 }
+
+// App settings types
+export interface AppearanceSettings {
+  theme: 'light' | 'dark' | 'system';
+}
+
+export interface PreferenceSettings {
+  compactMode: boolean;
+  defaultView: string;
+  dateFormat: string;
+}
+
+export interface NotificationSettings {
+  emailNotifications: boolean;
+  appNotifications: boolean;
+  categories: {
+    livestock: boolean;
+    health: boolean;
+    feed: boolean;
+    financial: boolean;
+  };
+}
+
+export interface SecuritySettings {
+  twoFactorEnabled: boolean;
+}

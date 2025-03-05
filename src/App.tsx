@@ -13,11 +13,12 @@ import LivestockTracking from "./pages/LivestockTracking";
 import HealthManagement from "./pages/HealthManagement";
 import FeedManagement from "./pages/FeedManagement";
 import FinancialManagement from "./pages/FinancialManagement";
+import Settings from "./pages/Settings";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./components/theme-provider";
 import { useAuthContext } from "./hooks/useAuthContext";
 
-// Create protected route component
+// Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, isLoading } = useAuthContext();
   
@@ -80,6 +81,11 @@ const App = () => (
               <Route path="/financial" element={
                 <ProtectedRoute>
                   <FinancialManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <Settings />
                 </ProtectedRoute>
               } />
               
