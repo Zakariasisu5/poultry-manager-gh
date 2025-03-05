@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
@@ -9,7 +8,8 @@ import {
   Home,
   Settings,
   HelpCircle,
-  Egg
+  Egg,
+  DollarSign
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -80,7 +80,7 @@ export function Sidebar({ open, onOpenChange }: SidebarProps) {
     { 
       title: "Financial Management", 
       path: "/financial", 
-      icon: PieChart 
+      icon: DollarSign 
     }
   ];
 

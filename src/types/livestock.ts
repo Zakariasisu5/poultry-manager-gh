@@ -12,3 +12,6 @@ export type FeedConsumption = Tables<'feed_consumption'>;
 export interface FeedConsumptionWithInventory extends FeedConsumption {
   feed_inventory?: FeedInventory;
 }
+
+// Financial transaction type
+export type FinancialTransaction = Tables<'financial_transactions'>;

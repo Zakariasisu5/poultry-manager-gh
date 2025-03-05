@@ -12,6 +12,7 @@ import LandingPage from "./pages/LandingPage";
 import LivestockTracking from "./pages/LivestockTracking";
 import HealthManagement from "./pages/HealthManagement";
 import FeedManagement from "./pages/FeedManagement";
+import FinancialManagement from "./pages/FinancialManagement";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./components/theme-provider";
 import { useAuthContext } from "./hooks/useAuthContext";
@@ -74,6 +75,11 @@ const App = () => (
               <Route path="/feed" element={
                 <ProtectedRoute>
                   <FeedManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/financial" element={
+                <ProtectedRoute>
+                  <FinancialManagement />
                 </ProtectedRoute>
               } />
               
