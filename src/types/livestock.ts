@@ -1,3 +1,4 @@
+
 import { Tables } from "@/integrations/supabase/types";
 
 export type Livestock = Tables<'livestock'>;
@@ -24,4 +25,16 @@ export interface FinancialTransactionFormData {
   description: string | null;
   related_livestock_id: string | null;
   user_id: string;
+}
+
+// User profile type
+export interface UserProfile {
+  id: string;
+  username?: string | null;
+  full_name?: string | null;
+  avatar_url?: string | null;
+  email?: string | null;
+  role?: string | null;
+  updated_at?: string;
+  created_at?: string;
 }
