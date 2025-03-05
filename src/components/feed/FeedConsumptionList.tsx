@@ -7,12 +7,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { Pencil, Trash2, Search } from "lucide-react";
-import { FeedConsumption } from "@/types/livestock";
+import { FeedConsumption, FeedConsumptionWithInventory } from "@/types/livestock";
 
 interface FeedConsumptionListProps {
-  feedConsumption: FeedConsumption[];
+  feedConsumption: FeedConsumptionWithInventory[];
   isLoading: boolean;
-  onEdit: (consumption: FeedConsumption) => void;
+  onEdit: (consumption: FeedConsumptionWithInventory) => void;
   onDelete: (id: string) => void;
 }
 
@@ -22,7 +22,7 @@ export function FeedConsumptionList({ feedConsumption, isLoading, onEdit, onDele
   const filteredConsumption = feedConsumption.filter((item) => {
     const searchString = searchTerm.toLowerCase();
     return (
-      (item.feed_inventory as any)?.feed_type.toLowerCase().includes(searchString) ||
+      (item.feed_inventory?.feed_type?.toLowerCase().includes(searchString)) ||
       (item.livestock_group && item.livestock_group.toLowerCase().includes(searchString)) ||
       (item.notes && item.notes.toLowerCase().includes(searchString))
     );
@@ -75,7 +75,7 @@ export function FeedConsumptionList({ feedConsumption, isLoading, onEdit, onDele
                   <TableRow key={item.id}>
                     <TableCell>{format(new Date(item.consumption_date), "MMM d, yyyy")}</TableCell>
                     <TableCell className="font-medium">
-                      {(item.feed_inventory as any)?.feed_type || "Unknown Feed"}
+                      {item.feed_inventory?.feed_type || "Unknown Feed"}
                     </TableCell>
                     <TableCell>{item.quantity_used}</TableCell>
                     <TableCell>{item.livestock_group || "-"}</TableCell>

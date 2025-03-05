@@ -1,11 +1,11 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, Cell, Pie, PieChart } from "recharts";
-import { FeedInventory, FeedConsumption } from "@/types/livestock";
+import { FeedInventory, FeedConsumptionWithInventory } from "@/types/livestock";
 
 interface FeedSummaryProps {
   feedInventory: FeedInventory[];
-  feedConsumption: FeedConsumption[];
+  feedConsumption: FeedConsumptionWithInventory[];
   isLoading: boolean;
 }
 
@@ -28,7 +28,7 @@ export function FeedSummary({ feedInventory, feedConsumption, isLoading }: FeedS
   let consumptionByFeedType = {};
   
   feedConsumption.forEach(item => {
-    const feedType = (item.feed_inventory as any)?.feed_type || "Unknown";
+    const feedType = item.feed_inventory?.feed_type || "Unknown";
     if (!consumptionByFeedType[feedType]) {
       consumptionByFeedType[feedType] = 0;
     }

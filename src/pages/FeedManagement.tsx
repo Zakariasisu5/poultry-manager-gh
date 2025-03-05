@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { useToast } from "@/components/ui/use-toast";
@@ -11,7 +10,7 @@ import { FeedSummary } from "@/components/feed/FeedSummary";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/hooks/useAuthContext";
-import { FeedInventory, FeedConsumption } from "@/types/livestock";
+import { FeedInventory, FeedConsumption, FeedConsumptionWithInventory } from "@/types/livestock";
 
 const FeedManagement = () => {
   const { toast } = useToast();
@@ -19,7 +18,7 @@ const FeedManagement = () => {
   const { session } = useAuthContext();
   const userId = session?.user.id || '';
   const [selectedInventoryItem, setSelectedInventoryItem] = useState<FeedInventory | null>(null);
-  const [selectedConsumptionRecord, setSelectedConsumptionRecord] = useState<FeedConsumption | null>(null);
+  const [selectedConsumptionRecord, setSelectedConsumptionRecord] = useState<FeedConsumptionWithInventory | null>(null);
   const [activeTab, setActiveTab] = useState("inventory");
 
   // Fetch feed inventory
@@ -65,7 +64,7 @@ const FeedManagement = () => {
         });
         return [];
       }
-      return data || [];
+      return data as FeedConsumptionWithInventory[] || [];
     },
     enabled: !!userId,
   });
@@ -194,7 +193,7 @@ const FeedManagement = () => {
     setActiveTab("addInventory");
   };
 
-  const handleEditConsumption = (consumption: FeedConsumption) => {
+  const handleEditConsumption = (consumption: FeedConsumptionWithInventory) => {
     setSelectedConsumptionRecord(consumption);
     setActiveTab("addConsumption");
   };
@@ -278,7 +277,7 @@ const FeedManagement = () => {
           <TabsContent value="summary" className="space-y-4">
             <FeedSummary 
               feedInventory={feedInventory || []} 
-              feedConsumption={feedConsumption || []}
+              feedConsumption={(feedConsumption as FeedConsumptionWithInventory[]) || []}
               isLoading={loadingInventory || loadingConsumption} 
             />
           </TabsContent>
@@ -294,7 +293,7 @@ const FeedManagement = () => {
           
           <TabsContent value="consumption" className="space-y-4">
             <FeedConsumptionList
-              feedConsumption={feedConsumption || []}
+              feedConsumption={(feedConsumption as FeedConsumptionWithInventory[]) || []}
               isLoading={loadingConsumption}
               onEdit={handleEditConsumption}
               onDelete={handleDeleteConsumption}
