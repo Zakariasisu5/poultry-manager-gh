@@ -18,6 +18,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Livestock } from "@/types/livestock";
+import { useAuthContext } from "@/hooks/useAuthContext";
 
 interface FinancialTransactionFormProps {
   onTransactionAdded: () => void;
@@ -37,6 +38,7 @@ type FormValues = z.infer<typeof formSchema>;
 export function FinancialTransactionForm({ onTransactionAdded }: FinancialTransactionFormProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const { user } = useAuthContext();
   
   const { data: livestock } = useQuery({
     queryKey: ["livestock"],
@@ -88,6 +90,15 @@ export function FinancialTransactionForm({ onTransactionAdded }: FinancialTransa
   const categories = transactionType === "income" ? incomeCategories : expenseCategories;
 
   const onSubmit = async (values: FormValues) => {
+    if (!user) {
+      toast({
+        title: "Authentication error",
+        description: "You must be signed in to add transactions",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setLoading(true);
     try {
       const { error } = await supabase.from("financial_transactions").insert({
@@ -97,6 +108,7 @@ export function FinancialTransactionForm({ onTransactionAdded }: FinancialTransa
         amount: values.amount,
         description: values.description || null,
         related_livestock_id: values.related_livestock_id || null,
+        user_id: user.id,
       });
 
       if (error) {
