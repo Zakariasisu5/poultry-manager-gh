@@ -15,3 +15,14 @@ export interface FeedConsumptionWithInventory extends FeedConsumption {
 
 // Financial transaction type
 export type FinancialTransaction = Tables<'financial_transactions'>;
+
+// Add a type specifically for form submissions if needed
+export interface FinancialTransactionFormData {
+  transaction_date: string;
+  transaction_type: 'income' | 'expense';
+  category: string;
+  amount: number;
+  description?: string | null;
+  related_livestock_id?: string | null;
+  user_id: string;
+}
