@@ -1,7 +1,7 @@
 ### Modern Poultry Farm Management
 
 Streamline your poultry operations, track egg production, and manage your farm with our all-in-one solution.
-### url : https://preview--poultry-manager-gh.lovable.app/welcome
+### url : poultry-manager-gh.vercel.app
 
 ### Get Started
 Features Designed for Modern Poultry Farmers
